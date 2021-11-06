@@ -135,13 +135,17 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
 
         # remesh then cutout face
         cmds.select(self.pumpkin_name)
+        cmds.delete(ch=True)
         # cmds.polySmooth(self.pumpkin_name, dv=1, c=1)
         # cmds.polyTriangulate(self.pumpkin_name)
-        cmds.polyRemesh(maxEdgeLength=0.15,
+        cmds.polyRemesh(maxEdgeLength=0.25,
                         collapseThreshold=0.6, smoothStrength=100)
         cmds.rename('pumpkin_before')
+
         cmds.polyCBoolOp('pumpkin_before', 'pumpkin_cuts',
                          op=2, cls=2, n=self.pumpkin_name)
+
+        #     # self.create_single_pumpkin()
 
         cmds.select(self.pumpkin_name)
         cmds.delete(ch=True)
@@ -281,11 +285,11 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         seperated_mouth_cuts = bool(random.getrandbits(1))
 
         if(seperated_mouth_cuts):
-            base_scale = random.uniform(0.5, 0.8)
-            cut_distance = 0.1
-        else:
-            base_scale = random.uniform(1, 1.5)
+            base_scale = random.uniform(1, 1.3)
             cut_distance = 0.07
+        else:
+            base_scale = random.uniform(0.5, 0.8)
+            cut_distance = 0.08
 
         cut_type(mouth_baseline, near_center_z +
                  0.035, 1.5*base_scale, 1.5*base_scale)
@@ -362,7 +366,7 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         cmds.scale(1, 0.4, 1)
 
     def make_pumpkin_circle_cut(self, y, z, scale_x, scale_z, rotation='0deg'):
-        cmds.polyCylinder(n="cut", h=1.5, r=0.05)
+        cmds.polyCylinder(n="cut", h=1.5, r=0.05, sa=5, sc=5, sh=5)
         cut_name = cmds.ls(sl=True)[0]
         cmds.parent(cut_name, 'pumpkin_cuts')
 
@@ -374,7 +378,7 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         cmds.rotate(0, rotation, '90deg', r=True)
 
     def make_pumpkin_triangle_cut(self, y, z, scale_x, scale_z, rotation='0deg'):
-        cmds.polyPrism(n="cut", w=0.1, l=1)
+        cmds.polyPrism(n="cut", w=0.1, l=1, sc=5, sh=5)
         cut_name = cmds.ls(sl=True)[0]
         cmds.parent(cut_name, 'pumpkin_cuts')
 
@@ -386,7 +390,7 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         cmds.rotate(0, rotation, '90deg', r=True)
 
     def make_pumpkin_rectangle_cut(self, y, z, scale_y, scale_z, rotation='45deg'):
-        cmds.polyCube(n="cut", h=0.1, d=0.1, w=1.3)
+        cmds.polyCube(n="cut", h=0.1, d=0.1, w=1.3, sh=4, sw=4, sd=4)
         cut_name = cmds.ls(sl=True)[0]
         cmds.parent(cut_name, 'pumpkin_cuts')
 
