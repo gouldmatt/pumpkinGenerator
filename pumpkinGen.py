@@ -203,9 +203,9 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         cmds.select(self.pumpkin_name)
 
     def create_eyes(self):
-        self.left_eye_y = random.uniform(0.8, 0.9)
+        self.left_eye_y = random.uniform(0.75, 0.81)
         self.left_eye_z = random.uniform(0, 0.25)
-        self.right_eye_y = random.uniform(0.8, 0.9)
+        self.right_eye_y = random.uniform(0.75, 0.81)
         self.right_eye_z = random.uniform(0.75, 1)
         shape = random.sample(['circle', 'diamond', 'triangle'], 1)
 
@@ -376,6 +376,7 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         cmds.move(1, y, z, os=True, wd=True, r=True)
         cmds.scale(scale_x, 1, scale_z)
         cmds.rotate(0, rotation, '90deg', r=True)
+        cmds.delete(ch=True)
 
     def make_pumpkin_triangle_cut(self, y, z, scale_x, scale_z, rotation='0deg'):
         cmds.polyPrism(n="cut", w=0.1, l=1, sc=5, sh=5)
@@ -388,9 +389,10 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         cmds.move(1, y, z, os=True, wd=True, r=True)
         cmds.scale(scale_x, 1, scale_z)
         cmds.rotate(0, rotation, '90deg', r=True)
+        cmds.delete(ch=True)
 
     def make_pumpkin_rectangle_cut(self, y, z, scale_y, scale_z, rotation='45deg'):
-        cmds.polyCube(n="cut", h=0.1, d=0.1, w=1.3, sh=4, sw=4, sd=4)
+        cmds.polyCube(n="cut", h=0.1, d=0.1, w=1.3, sh=3, sw=3, sd=3)
         cut_name = cmds.ls(sl=True)[0]
         cmds.parent(cut_name, 'pumpkin_cuts')
 
@@ -400,6 +402,7 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         cmds.move(1, y, z, os=True, wd=True, r=True)
         cmds.scale(1, scale_y, scale_z)
         cmds.rotate(rotation, 0, 0, r=True)
+        cmds.delete(ch=True)
 
 
 try:
