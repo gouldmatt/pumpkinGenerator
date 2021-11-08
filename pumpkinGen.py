@@ -44,7 +44,9 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         self.create_layouts()
         self.create_connections()
 
+        self.mouth_shapes = ['happy', 'sad', 'neutral']
         self.num_pumpkins = 1
+        self.add_pointlight = False
 
     def create_slider(self):
         slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
@@ -57,9 +59,15 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
     def create_widgets(self):
         self.slider_num_pumpkins = QtWidgets.QSpinBox()
         self.slider_num_pumpkins.setMinimum(1)
-        # self.number_display = QtWidgets.QLabel("0")
+
         self.create_btn = QtWidgets.QPushButton("Create")
-        # self.face_section = QtWidgets.QLabel("Face")
+        self.sad_checkbox = QtWidgets.QCheckBox("Sad")
+        self.sad_checkbox.setCheckState(QtCore.Qt.CheckState.Checked)
+        self.happy_checkbox = QtWidgets.QCheckBox("Happy")
+        self.happy_checkbox.setCheckState(QtCore.Qt.CheckState.Checked)
+        self.neutral_checkbox = QtWidgets.QCheckBox("Neutral")
+        self.neutral_checkbox.setCheckState(QtCore.Qt.CheckState.Checked)
+        self.add_pointlight_checkbox = QtWidgets.QCheckBox()
 
     def create_layouts(self):
         # horz_layout = QtWidgets.QHBoxLayout()
@@ -72,13 +80,13 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
 
         horz_layout2 = QtWidgets.QHBoxLayout()
         horz_layout2.addWidget(QLabel("Add point light in pumpkin:"))
-        horz_layout2.addWidget(QtWidgets.QCheckBox())
+        horz_layout2.addWidget(self.add_pointlight_checkbox)
 
         horz_layout3 = QtWidgets.QHBoxLayout()
         horz_layout3.addWidget(QLabel("Mouth:"))
-        horz_layout3.addWidget(QtWidgets.QCheckBox("Happy"))
-        horz_layout3.addWidget(QtWidgets.QCheckBox("Sad"))
-        horz_layout3.addWidget(QtWidgets.QCheckBox("Neutral"))
+        horz_layout3.addWidget(self.happy_checkbox)
+        horz_layout3.addWidget(self.sad_checkbox)
+        horz_layout3.addWidget(self.neutral_checkbox)
 
         main_layout = QtWidgets.QVBoxLayout(self)
         # main_layout.addWidget(QLabel("test"))
@@ -92,9 +100,38 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         self.create_btn.clicked.connect(self.create_pumpkins)
         self.slider_num_pumpkins.valueChanged.connect(self.number_changed)
 
+        self.add_pointlight_checkbox.toggled.connect(self.point_light_changed)
+
+        self.sad_checkbox.clicked.connect(lambda: self.emotion_changed("sad"))
+        self.neutral_checkbox.clicked.connect(
+            lambda: self.emotion_changed("neutral"))
+        self.happy_checkbox.clicked.connect(
+            lambda: self.emotion_changed("happy"))
+
+    def point_light_changed(self, checked):
+        self.add_pointlight = checked
+
+    def emotion_changed(self, shape):
+        if shape in self.mouth_shapes:
+            self.mouth_shapes.remove(shape)
+        else:
+            self.mouth_shapes.append(shape)
+
+        if len(self.mouth_shapes) == 1:
+            if self.mouth_shapes[0] == "sad":
+                self.sad_checkbox.setDisabled(True)
+            elif self.mouth_shapes[0] == "neutral":
+                self.neutral_checkbox.setDisabled(True)
+            elif self.mouth_shapes[0] == "happy":
+                self.happy_checkbox.setDisabled(True)
+        else:
+            self.sad_checkbox.setEnabled(True)
+            self.neutral_checkbox.setEnabled(True)
+            self.happy_checkbox.setEnabled(True)
+
+        print(self.mouth_shapes)
+
     def number_changed(self, value):
-        # self.number_display.setText(str(value))
-        print(value)
         self.num_pumpkins = int(value)
 
     def create_pumpkins(self):
@@ -112,13 +149,6 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
             if i % 3 == 0 and i != 0:
                 j = j + 1
                 k = 0
-
-        myBlinn = cmds.shadingNode('blinn', asShader=True, n="pumpkinMaterial")
-        cmds.setAttr("pumpkinMaterial.color", 0.5783,
-                     0.3092, 0.102, type='double3')
-        for i in range(self.num_pumpkins):
-            cmds.select("pumpkin" + str(i+1) + "|pumpkin")
-            cmds.hyperShade(assign=myBlinn)
 
         cmds.select(clear=True)
 
@@ -150,11 +180,15 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         cmds.select(self.pumpkin_name)
         cmds.delete(ch=True)
 
-        cmds.pointLight(rgb=[1.00, 0.51, 0.18], i=5,
-                        n=self.pumpkin_name+"_point_light")
+        if self.add_pointlight:
+            cmds.pointLight(rgb=[1.00, 0.51, 0.18], i=5,
+                            n=self.pumpkin_name+"_point_light")
+            cmds.group(self.pumpkin_name, self.pumpkin_name +
+                       "_stem", self.pumpkin_name+"_bottom_stem", self.pumpkin_name+"_point_light", n=self.pumpkin_name)
+        else:
+            cmds.group(self.pumpkin_name, self.pumpkin_name +
+                       "_stem", self.pumpkin_name+"_bottom_stem", n=self.pumpkin_name)
 
-        cmds.group(self.pumpkin_name, self.pumpkin_name +
-                   "_stem", self.pumpkin_name+"_bottom_stem", self.pumpkin_name+"_point_light", n=self.pumpkin_name)
         overall_scale = random.uniform(0.7, 1.4)
         cmds.scale(overall_scale + random.uniform(-0.1, 0.15), overall_scale +
                    random.uniform(-0.1, 0.15), overall_scale + random.uniform(-0.1, 0.15))
@@ -267,10 +301,10 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
                 near_center_y, near_center_z, random_scale, random_scale + 0.5, nose_rotation + 'deg')
 
     def create_mouth(self):
-        shape = random.sample(['happy', 'sad', 'neutral'], 1)
+        mouth_shape = random.sample(self.mouth_shapes, 1)[0]
         cut_type = random.sample(
             [self.make_pumpkin_circle_cut, self.make_pumpkin_rectangle_cut, self.make_pumpkin_triangle_cut], 1)
-        self.mouth_cut(cut_type[0], shape[0])
+        self.mouth_cut(cut_type[0], mouth_shape)
 
     def mouth_cut(self, cut_type, shape):
         mouth_baseline = random.uniform(0, 0.1)
@@ -309,7 +343,7 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
             cut_z = near_center_z + j * cut_distance
 
             if shape == 'sad':
-                cut_y = mouth_baseline + \
+                cut_y = mouth_top - \
                     float(level_count)/total_levels * \
                     (mouth_top-mouth_baseline)
             elif shape == 'happy':
