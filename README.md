@@ -11,4 +11,5 @@ Python script using maya.cmds & pyside2 to randomly generate 3D pumpkin models.
   <img src="images/pumpkin_1.png" width="400" />
   <img src="images/pumpkin_2.png" width="400" /> 
   <img src="images/pumpkin_3.png" width="400" />
+  <img src="images/pumpkin_4.png" width="400" />
 </p>
