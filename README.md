@@ -1,4 +1,4 @@
-# pumpkinGenerator
+# Pumpkin Generator
 
 Python script using maya.cmds & pyside2 to randomly generate 3D pumpkin models. 
 
