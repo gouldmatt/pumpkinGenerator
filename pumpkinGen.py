@@ -343,7 +343,7 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
                     float(level_count)/total_levels * \
                     (mouth_top-mouth_baseline)
             elif shape == 'happy':
-                # increase height at each level for sad face
+                # increase height at each level for happy face
                 cut_y = mouth_baseline + \
                     float(level_count)/total_levels * \
                     (mouth_top-mouth_baseline)
