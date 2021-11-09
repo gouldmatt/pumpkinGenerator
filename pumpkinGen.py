@@ -48,31 +48,24 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         self.num_pumpkins = 1
         self.add_pointlight = False
 
-    def create_slider(self):
-        slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
-        slider.setRange(4, 64)
-        slider.setPageStep(1)
-        slider.setTickPosition(QtWidgets.QSlider.TicksBelow)
-
-        return(slider)
-
     def create_widgets(self):
         self.slider_num_pumpkins = QtWidgets.QSpinBox()
         self.slider_num_pumpkins.setMinimum(1)
 
         self.create_btn = QtWidgets.QPushButton("Create")
-        self.sad_checkbox = QtWidgets.QCheckBox("Sad")
-        self.sad_checkbox.setCheckState(QtCore.Qt.CheckState.Checked)
-        self.happy_checkbox = QtWidgets.QCheckBox("Happy")
-        self.happy_checkbox.setCheckState(QtCore.Qt.CheckState.Checked)
-        self.neutral_checkbox = QtWidgets.QCheckBox("Neutral")
-        self.neutral_checkbox.setCheckState(QtCore.Qt.CheckState.Checked)
+
         self.add_pointlight_checkbox = QtWidgets.QCheckBox()
 
+        self.sad_checkbox = QtWidgets.QCheckBox("Sad")
+        self.sad_checkbox.setCheckState(QtCore.Qt.CheckState.Checked)
+
+        self.happy_checkbox = QtWidgets.QCheckBox("Happy")
+        self.happy_checkbox.setCheckState(QtCore.Qt.CheckState.Checked)
+
+        self.neutral_checkbox = QtWidgets.QCheckBox("Neutral")
+        self.neutral_checkbox.setCheckState(QtCore.Qt.CheckState.Checked)
+
     def create_layouts(self):
-        # horz_layout = QtWidgets.QHBoxLayout()
-        # horz_layout.addWidget(self.slider_num_pumpkins)
-        # horz_layout.addWidget(self.number_display)
 
         horz_layout = QtWidgets.QHBoxLayout()
         horz_layout.addWidget(QLabel("Number of pumpkins:"))
@@ -89,7 +82,6 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         horz_layout3.addWidget(self.neutral_checkbox)
 
         main_layout = QtWidgets.QVBoxLayout(self)
-        # main_layout.addWidget(QLabel("test"))
         main_layout.addLayout(horz_layout)
         main_layout.addLayout(horz_layout2)
         main_layout.addLayout(horz_layout3)
@@ -98,6 +90,7 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
 
     def create_connections(self):
         self.create_btn.clicked.connect(self.create_pumpkins)
+
         self.slider_num_pumpkins.valueChanged.connect(self.number_changed)
 
         self.add_pointlight_checkbox.toggled.connect(self.point_light_changed)
@@ -117,6 +110,7 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         else:
             self.mouth_shapes.append(shape)
 
+        #  ensure that at least one mouth shape is selected
         if len(self.mouth_shapes) == 1:
             if self.mouth_shapes[0] == "sad":
                 self.sad_checkbox.setDisabled(True)
@@ -138,17 +132,21 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         """
         Main call to generate multiple pumpkins
         """
+        row_width = 3
 
-        j = 0
-        k = 0
-        for i in range(1, self.num_pumpkins + 1):
+        offset_between_pumpkins = 2.7
+        row = 0
+        col = 0
+        for pumpkin_number in range(1, self.num_pumpkins + 1):
+            # create the pumpkin and move to proper place in the grid
             self.create_single_pumpkin()
-            cmds.move(0, j*2.7, k*2.7)
-            k = k + 1
+            cmds.move(0, row*offset_between_pumpkins,
+                      col*offset_between_pumpkins)
+            col = col + 1
 
-            if i % 3 == 0 and i != 0:
-                j = j + 1
-                k = 0
+            if pumpkin_number % row_width == 0 and pumpkin_number != 0:
+                row = row + 1
+                col = 0
 
         cmds.select(clear=True)
 
@@ -163,19 +161,16 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         self.create_nose()
         self.create_mouth()
 
-        # remesh then cutout face
+        # delete history & remesh
         cmds.select(self.pumpkin_name)
         cmds.delete(ch=True)
-        # cmds.polySmooth(self.pumpkin_name, dv=1, c=1)
-        # cmds.polyTriangulate(self.pumpkin_name)
         cmds.polyRemesh(maxEdgeLength=0.25,
                         collapseThreshold=0.6, smoothStrength=100)
         cmds.rename('pumpkin_before')
 
+        # boolean operation creates the face
         cmds.polyCBoolOp('pumpkin_before', 'pumpkin_cuts',
                          op=2, cls=2, n=self.pumpkin_name)
-
-        #     # self.create_single_pumpkin()
 
         cmds.select(self.pumpkin_name)
         cmds.delete(ch=True)
@@ -189,6 +184,7 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
             cmds.group(self.pumpkin_name, self.pumpkin_name +
                        "_stem", self.pumpkin_name+"_bottom_stem", n=self.pumpkin_name)
 
+        # random scale to have multiple size of pumpkins
         overall_scale = random.uniform(0.7, 1.4)
         cmds.scale(overall_scale + random.uniform(-0.1, 0.15), overall_scale +
                    random.uniform(-0.1, 0.15), overall_scale + random.uniform(-0.1, 0.15))
@@ -316,6 +312,7 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         total_levels = (number_cuts - 1)/2
         number_cuts = number_cuts + 1
 
+        # determine if mouth cuts are close enough to be seperate or if they will make one larger cut
         seperated_mouth_cuts = bool(random.getrandbits(1))
 
         if(seperated_mouth_cuts):
@@ -328,7 +325,6 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         cut_type(mouth_baseline, near_center_z +
                  0.035, 1.5*base_scale, 1.5*base_scale)
 
-        # mouth_cut_height = random.uniform(1, 7)
         mouth_style = random.sample(['smaller', 'larger'], 1)
         mouth_cut_rotation = str(random.uniform(0, 20))
 
@@ -336,30 +332,25 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
             if i % 2 == 0:
                 j = (i+1) * -1
                 level_count = level_count + 1
-                # mouth_side_scale = random.uniform(0.3, 10)
             else:
                 j = (i + 1)
 
             cut_z = near_center_z + j * cut_distance
 
             if shape == 'sad':
+                # decrease height at each level for sad face
                 cut_y = mouth_top - \
                     float(level_count)/total_levels * \
                     (mouth_top-mouth_baseline)
             elif shape == 'happy':
+                # increase height at each level for sad face
                 cut_y = mouth_baseline + \
                     float(level_count)/total_levels * \
                     (mouth_top-mouth_baseline)
             else:
                 cut_y = mouth_baseline
 
-            # if i == (number_cuts - 1):
-            #     cut_type(cut_y, cut_z, mouth_side_scale*(float(number_cuts)/10),
-            #              5*(float(number_cuts)/10), '45deg')
-            # elif i == (number_cuts - 2):
-            #     cut_type(cut_y, cut_z, mouth_side_scale*(float(number_cuts)/10),
-            #              5*(float(number_cuts)/10), '-45deg')
-            # else:
+            # mouth style either has shape of the cuts get larger or smaller towards the ends of the mouth
             if(mouth_style[0] == 'larger'):
                 cut_type(cut_y, cut_z, base_scale + (float(level_count)/total_levels),
                          base_scale + (float(level_count)/total_levels), mouth_cut_rotation + 'deg')
@@ -368,6 +359,7 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
                          2*base_scale + (float(total_levels - level_count)/total_levels), mouth_cut_rotation + 'deg')
 
     def create_stems(self):
+        # stem is scaled cylinder
         cmds.polyCylinder(name=self.pumpkin_name + "_stem", height=2,
                           subdivisionsAxis=10, subdivisionsHeight=2)
         cmds.scale(0.12, 0.12, 0.12)
@@ -384,9 +376,11 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         random_angle = random.uniform(-45, 45)
         cmds.rotate(str(random_angle) + 'deg', 0, 0, r=True)
 
+        # extrude to add to stem length a random amount
         cmds.polyExtrudeFacet(self.pumpkin_name +
                               "_stem" + ".f[21]", t=[random.uniform(0.01, 0.03), random.uniform(0.1, 0.2), random.uniform(0.01, 0.03)])
 
+        # crease and smooth to get final stem
         cmds.select(self.pumpkin_name + "_stem" + ".e[0:9]")
         cmds.polyCrease(value=10)
 
@@ -400,12 +394,16 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         cmds.scale(1, 0.4, 1)
 
     def make_pumpkin_circle_cut(self, y, z, scale_x, scale_z, rotation='0deg'):
+        """
+        Create geometry that will make a circle cut on the pumpkin after boolean is applied
+        (y,z) is between (0,0) [bottom left] and (1,1) [top right] of pumpkin face 
+        """
         cmds.polyCylinder(n="cut", h=1.5, r=0.05, sa=5, sc=5, sh=5)
         cut_name = cmds.ls(sl=True)[0]
         cmds.parent(cut_name, 'pumpkin_cuts')
 
-        y = 0.8*y-0.4
-        z = z-0.5
+        y = 0.8*y-0.4  # map y from 0 to 1 to -0.4 and 0.4
+        z = z-0.5  # map z from 0 to 1 to -0.5 and 0.5
 
         cmds.move(1, y, z, os=True, wd=True, r=True)
         cmds.scale(scale_x, 1, scale_z)
@@ -413,12 +411,16 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         cmds.delete(ch=True)
 
     def make_pumpkin_triangle_cut(self, y, z, scale_x, scale_z, rotation='0deg'):
+        """
+        Create geometry that will make a triangle cut on the pumpkin after boolean is applied
+        (y,z) is between (0,0) [bottom left] and (1,1) [top right] of pumpkin face 
+        """
         cmds.polyPrism(n="cut", w=0.1, l=1, sc=5, sh=5)
         cut_name = cmds.ls(sl=True)[0]
         cmds.parent(cut_name, 'pumpkin_cuts')
 
-        y = 0.8*y-0.4
-        z = z-0.5
+        y = 0.8*y-0.4  # map y from 0 to 1 to -0.4 and 0.4
+        z = z-0.5  # map z from 0 to 1 to -0.5 and 0.5
 
         cmds.move(1, y, z, os=True, wd=True, r=True)
         cmds.scale(scale_x, 1, scale_z)
@@ -426,12 +428,16 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         cmds.delete(ch=True)
 
     def make_pumpkin_rectangle_cut(self, y, z, scale_y, scale_z, rotation='45deg'):
+        """
+        Create geometry that will make a rectangle cut on the pumpkin after boolean is applied
+        (y,z) is between (0,0) [bottom left] and (1,1) [top right] of pumpkin face 
+        """
         cmds.polyCube(n="cut", h=0.1, d=0.1, w=1.3, sh=3, sw=3, sd=3)
         cut_name = cmds.ls(sl=True)[0]
         cmds.parent(cut_name, 'pumpkin_cuts')
 
-        y = 0.8*y-0.4
-        z = z-0.5
+        y = 0.8*y-0.4  # map y from 0 to 1 to -0.4 and 0.4
+        z = z-0.5  # map z from 0 to 1 to -0.5 and 0.5
 
         cmds.move(1, y, z, os=True, wd=True, r=True)
         cmds.scale(1, scale_y, scale_z)
