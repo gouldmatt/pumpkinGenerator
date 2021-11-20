@@ -175,19 +175,40 @@ class PumpkinCreateDialog(QtWidgets.QDialog):
         cmds.select(self.pumpkin_name)
         cmds.delete(ch=True)
 
-        if self.add_pointlight:
-            cmds.pointLight(rgb=[1.00, 0.51, 0.18], i=5,
-                            n=self.pumpkin_name+"_point_light")
-            cmds.group(self.pumpkin_name, self.pumpkin_name +
-                       "_stem", self.pumpkin_name+"_bottom_stem", self.pumpkin_name+"_point_light", n=self.pumpkin_name)
-        else:
-            cmds.group(self.pumpkin_name, self.pumpkin_name +
-                       "_stem", self.pumpkin_name+"_bottom_stem", n=self.pumpkin_name)
+        cmds.polyUnite(self.pumpkin_name, self.pumpkin_name +
+                       "_stem", self.pumpkin_name+"_bottom_stem", ch=False, muv=1)
+
+        cmds.rename(self.pumpkin_name)
 
         # random scale to have multiple size of pumpkins
         overall_scale = random.uniform(0.7, 1.4)
         cmds.scale(overall_scale + random.uniform(-0.1, 0.15), overall_scale +
                    random.uniform(-0.1, 0.15), overall_scale + random.uniform(-0.1, 0.15))
+
+        bbox = cmds.exactWorldBoundingBox(self.pumpkin_name)
+        bottom = [(bbox[0] + bbox[3])/2, bbox[1], (bbox[2] + bbox[5])/2]
+        cmds.xform(self.pumpkin_name, piv=bottom, ws=True)
+
+        cmds.move(0, 0, 0, rpr=True)
+        # cmds.freeze()
+        # cmds.makeIdentity()
+        cmds.delete(self.pumpkin_name, constructionHistory=True)
+        cmds.makeIdentity(self.pumpkin_name, apply=True, t=1, r=1, s=1, n=0)
+
+        if self.add_pointlight:
+            cmds.pointLight(rgb=[1.00, 0.51, 0.18], i=5,
+                            n=self.pumpkin_name+"_point_light")
+
+            bbx = cmds.xform(self.pumpkin_name, q=True,
+                             bb=True, ws=True)  # world space
+            centerX = (bbx[0] + bbx[3]) / 2.0
+            centerY = (bbx[1] + bbx[4]) / 2.0
+            centerZ = (bbx[2] + bbx[5]) / 2.0
+
+            cmds.move(centerX, centerY, centerZ)
+
+            cmds.group(self.pumpkin_name, self.pumpkin_name +
+                       "_point_light", n=self.pumpkin_name)
 
     def create_main_pumpkin(self):
         # main pumpkin shape is a sphere with some scaling
